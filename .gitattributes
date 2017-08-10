@@ -1,0 +1,2 @@
+audioset/vggish_model.ckpt filter=lfs diff=lfs merge=lfs -text
+audioset/vggish_pca_params.npz filter=lfs diff=lfs merge=lfs -text
