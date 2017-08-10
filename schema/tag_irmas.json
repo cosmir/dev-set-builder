@@ -1,0 +1,21 @@
+{"tag_irmas_instruments":
+    {
+        "value": {
+            "enum": [
+                "cello",
+                "clarinet",
+                "flute",
+                "guitar (acoustic)",
+                "guitar (electric)",
+                "organ",
+                "piano",
+                "saxophone",
+                "trumpet",
+                "violin",
+                "voice"
+            ]
+        },
+        "dense": false,
+        "description": "IRMAS instrument source annotations"
+    }
+}
