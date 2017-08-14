@@ -87,9 +87,10 @@ def jamify_test(infile):
     ann = jams.Annotation(namespace='tag_irmas_instruments',
                           duration=duration)
 
-    labels = pd.read_table(lab_out, header=None)[0]
-    for label in labels:
-        ann.append(time=0, duration=duration, value=INSTRUMENT_MAP[label], confidence=None)
+    #    labels = pd.read_table(lab_out, header=None)[0]
+    with open(lab_out, 'r') as fdesc:
+        for label in fdesc:
+            ann.append(time=0, duration=duration, value=INSTRUMENT_MAP[label.strip()], confidence=None)
 
     ann.annotation_metadata.corpus = 'IRMAS'
     ann.annotation_metadata.data_source = 'testing'
