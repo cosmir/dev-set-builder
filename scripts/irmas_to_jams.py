@@ -4,6 +4,7 @@ import argparse
 import sys
 import os
 
+import pandas as pd
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
@@ -68,13 +69,64 @@ def jamify_train(infile):
     J.save(jam_out)
 
 
+def jamify_test(infile):
+
+    dirname = os.path.dirname(infile)
+
+    basename = os.path.basename(infile)
+    root = os.path.splitext(basename)[0]
+    jam_out = os.path.join(dirname, os.path.extsep.join([root, 'jams']))
+    lab_out = os.path.join(dirname, os.path.extsep.join([root, 'txt']))
+
+    duration = librosa.get_duration(filename=infile)
+
+    J = jams.JAMS()
+    J.file_metadata.duration = duration
+    J.file_metadata.title = root
+
+    ann = jams.Annotation(namespace='tag_irmas_instruments',
+                          duration=duration)
+
+    labels = pd.read_table(lab_out, header=None)
+    for label in labels:
+        ann.append(time=0, duration=duration, value=INSTRUMENT_MAP[label], confidence=None)
+
+    ann.annotation_metadata.corpus = 'IRMAS'
+    ann.annotation_metadata.data_source = 'testing'
+    J.annotations.append(ann)
+    J.save(jam_out)
+
+
 def process_train(path, num_jobs):
 
     all_files = jams.util.find_with_extension(os.path.join(path,
                                                            'IRMAS-TrainingData'),
                                               'wav', depth=2)
 
-    Parallel(n_jobs=num_jobs)(delayed(jamify_train)(infile) for infile in tqdm(all_files))
+    Parallel(n_jobs=num_jobs)(delayed(jamify_train)(infile) for infile in tqdm(all_files,
+                                                                               desc='Training data'))
+
+
+def process_test(path, num_jobs):
+
+    part1 = jams.util.find_with_extension(os.path.join(path,
+                                                       'IRMAS-TestingData-Part1'),
+                                          'wav', depth=2)
+
+    part2 = jams.util.find_with_extension(os.path.join(path,
+                                                       'IRMAS-TestingData-Part2'),
+                                          'wav', depth=2)
+
+    part2 = jams.util.find_with_extension(os.path.join(path,
+                                                       'IRMAS-TestingData-Part3'),
+                                          'wav', depth=2)
+
+    all_files = []
+    all_files.extend(part1)
+    all_files.extend(part2)
+    all_files.extend(part3)
+    Parallel(n_jobs=num_jobs)(delayed(jamify_train)(infile) for infile in tqdm(all_files,
+                                                                               desc='Testing data'))
 
 
 if __name__ == '__main__':
