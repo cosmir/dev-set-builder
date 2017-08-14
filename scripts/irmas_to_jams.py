@@ -125,11 +125,11 @@ def process_test(path, num_jobs):
     all_files.extend(part1)
     all_files.extend(part2)
     all_files.extend(part3)
-    Parallel(n_jobs=num_jobs)(delayed(jamify_train)(infile) for infile in tqdm(all_files,
-                                                                               desc='Testing data'))
+    Parallel(n_jobs=num_jobs)(delayed(jamify_test)(infile) for infile in tqdm(all_files,
+                                                                              desc='Testing data'))
 
 
 if __name__ == '__main__':
     args = params(sys.argv[1:])
-    process_train(args['path'], args['num_jobs'])
     process_test(args['path'], args['num_jobs'])
+    process_train(args['path'], args['num_jobs'])
