@@ -33,7 +33,7 @@ BASE_VOCAB = sorted(INSTRUMENT_MAP.keys())
 def params(args):
 
     parser = argparse.ArgumentParser(description='Convert IRMAS to JAMS format')
-    parser.add_argument('path', dest='path', type=str, help='Path to IRMAS data')
+    parser.add_argument('path', type=str, help='Path to IRMAS data')
     parser.add_argument('-j', '--num-jobs', dest='num_jobs',
                         default=1, type=int, help='Number of parallel jobs')
 
