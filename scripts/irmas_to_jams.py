@@ -76,7 +76,7 @@ def jamify_test(infile):
     basename = os.path.basename(infile)
     root = os.path.splitext(basename)[0]
     jam_out = os.path.join(dirname, os.path.extsep.join([root, 'jams']))
-    lab_out = os.path.join(dirname, os.path.extsep.join([root, 'txt']))
+    lab_out = jam_out.replace('jams', 'txt')
 
     duration = librosa.get_duration(filename=infile)
 
