@@ -46,7 +46,7 @@ def jamify_train(infile):
     label = os.path.basename(dirname)
 
     basename = os.path.basename(infile)
-    root = os.path.extsplit(basename, 'wav')[0]
+    root = os.path.splitext(basename)[0]
     jam_out = os.path.join(dirname, os.path.extsep.join([root, 'jams']))
 
     duration = librosa.get_duration(filename=infile)
