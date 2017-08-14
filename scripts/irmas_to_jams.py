@@ -117,7 +117,7 @@ def process_test(path, num_jobs):
                                                        'IRMAS-TestingData-Part2'),
                                           'wav', depth=2)
 
-    part2 = jams.util.find_with_extension(os.path.join(path,
+    part3 = jams.util.find_with_extension(os.path.join(path,
                                                        'IRMAS-TestingData-Part3'),
                                           'wav', depth=2)
 
@@ -132,3 +132,4 @@ def process_test(path, num_jobs):
 if __name__ == '__main__':
     args = params(sys.argv[1:])
     process_train(args['path'], args['num_jobs'])
+    process_test(args['path'], args['num_jobs'])
