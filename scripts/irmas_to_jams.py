@@ -4,14 +4,13 @@ import argparse
 import sys
 import os
 
-import pandas as pd
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
-os.environ.setdefault('JAMS_SCHEMA_DIR', '../schema')
-
-import jams
 import librosa
+
+os.environ.setdefault('JAMS_SCHEMA_DIR', '../schema')
+import jams
 
 
 # Filename encodings of instruments => actual words
@@ -87,7 +86,6 @@ def jamify_test(infile):
     ann = jams.Annotation(namespace='tag_irmas_instruments',
                           duration=duration)
 
-    #    labels = pd.read_table(lab_out, header=None)[0]
     with open(lab_out, 'r') as fdesc:
         for label in fdesc:
             ann.append(time=0, duration=duration, value=INSTRUMENT_MAP[label.strip()], confidence=None)
