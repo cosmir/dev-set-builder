@@ -2,7 +2,7 @@ language: python
 
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y lib-avtools
+  - sudo apt-get install -y libav-tools
 
 sudo: false
 
