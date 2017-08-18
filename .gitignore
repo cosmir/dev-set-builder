@@ -102,4 +102,4 @@ ENV/
 .DS_Store
 
 # AudioSet Model
-audioset_model
+audioset/.model
