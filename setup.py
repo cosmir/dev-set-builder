@@ -12,8 +12,8 @@ setup(
     url='http://github.com/cosmir/dev-set-builder',
     download_url='http://github.com/cosmir/dev-set-builder/releases',
     packages=find_packages(),
-    package_data={'': ['audioset/vggish_model.cpkt',
-                       'audioset/vggish_pca_params.cpkt']},
+    package_data={'': ['audioset_model/vggish_model.cpkt',
+                       'audioset_model/vggish_pca_params.npz']},
     long_description='AudioSet VGGish model',
     classifiers=[
         "License :: OSI Approved :: ?",
