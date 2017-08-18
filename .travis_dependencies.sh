@@ -30,6 +30,9 @@ if [ ! -d "$src" ]; then
         export PATH="$src/bin:$PATH"
         conda_create
         source activate $ENV_NAME
+
+        conda install -c conda-forge ffmpeg
+
         pip install python-coveralls pytest-cov pytest-faulthandler
         source deactivate
     popd
