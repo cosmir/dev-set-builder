@@ -11,7 +11,7 @@ conda_create ()
     conda update -q conda
     conda config --add channels pypi
     conda info -a
-    deps='six coverage numpy scipy pandas decorator sphinx matplotlib librosa'
+    deps='six coverage numpy scipy pandas decorator sphinx matplotlib numba'
 
     conda create -q -n $ENV_NAME "python=$TRAVIS_PYTHON_VERSION" $deps
 }
@@ -31,7 +31,7 @@ if [ ! -d "$src" ]; then
         conda_create
         source activate $ENV_NAME
 
-        conda install -c conda-forge ffmpeg
+        conda install -c conda-forge ffmpeg librosa
 
         pip install python-coveralls pytest-cov pytest-faulthandler
         source deactivate
