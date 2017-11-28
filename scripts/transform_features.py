@@ -187,6 +187,8 @@ def convert_dataset(filenames, outdir, prefix='', feature_shape=(10, 128),
                   on_mismatch=on_mismatch, n_jobs=1, verbose=0)
     results = pool(dfx(fn, **kwargs) for fn in filenames)
 
+    # Filter any fully empty results
+    results = filter(lambda xy: bool(len(xy[0])), results)
     X = np.concatenate([xy[0] for xy in results], axis=0)
     safe_makedirs(outdir)
     x_out = os.path.join(outdir, "{}features.npy".format(prefix))
