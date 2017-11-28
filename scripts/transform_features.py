@@ -4,11 +4,11 @@
 Example
 -------
 $ ./transform_features.py /path/to/audioset_v1_embeddings/unbal_train \
-    /path/to/outputs
+    /path/to/outputs --prefix audioset_train_
 
 Will produce two files:
-    /path/to/outputs/audioset_features_train.npy (~2.4GB)
-    /path/to/outputs/audioset_labels_train.csv (~80MB)
+    /path/to/outputs/audioset_train_features.npy (~2.4GB)
+    /path/to/outputs/audioset_train_labels.csv (~80MB)
 '''
 
 import argparse
@@ -145,14 +145,42 @@ def load_tfrecord(fname, feature_shape=(10, 128), on_mismatch='skip',
     # Unpack features and skip any malformed objects.
     features = np.array([data.pop(FEAT_NAME) for data in records if data])
     key = filebase(fname)
-    index = ["{}.{:4d}".format(key, n)
+    index = ["{}.{:04d}".format(key, n)
              for n, data in enumerate(records) if data]
     meta = pd.DataFrame.from_records(filter(None, records), index=index)
     return features, meta
 
 
-def convert_dataset(filenames, outdir, feature_shape=(10, 128),
+def convert_dataset(filenames, outdir, prefix='', feature_shape=(10, 128),
                     on_mismatch='skip', fill_value=128, n_jobs=-2, verbose=1):
+    """Convert the TF version of AudioSet to NumPy / Pandas formats.
+
+    Parameters
+    ----------
+    filenames : iterable of str
+        Collection of filepaths to convert.
+
+    outdir : str
+        Root directory at which to write outputs.
+
+    prefix : str, default=''
+        Optional string with which to prefix created files, like:
+            {prefix}features.npy, {prefix}labels.csv
+
+    feature_shape, on_mismatch, fill_value
+        See `load_tfrecord`
+
+    n_jobs : int, default=-2
+        Number of parallel jobs to run.
+
+    verbose : int, default=1
+        Verbosity level, see joblib.Parallel for more info.
+
+    Returns
+    -------
+    success : bool
+        True if both files are written successfully.
+    """
     dfx = delayed(load_tfrecord)
     pool = Parallel(n_jobs=n_jobs, verbose=verbose)
     kwargs = dict(feature_shape=feature_shape, fill_value=fill_value,
@@ -161,11 +189,12 @@ def convert_dataset(filenames, outdir, feature_shape=(10, 128),
 
     X = np.concatenate([xy[0] for xy in results], axis=0)
     safe_makedirs(outdir)
-    x_out = os.path.join(outdir, "audioset_features_train.npy")
+    x_out = os.path.join(outdir, "{}features.npy".format(prefix))
     np.save(x_out, X)
     Y = pd.concat([xy[1] for xy in results])
-    y_out = os.path.join(outdir, "audioset_labels_train.csv")
+    y_out = os.path.join(outdir, "{}labels.csv".format(prefix))
     Y.to_csv(y_out, index_label="index")
+    return all([os.path.exists(fn) for fn in (x_out, y_out)])
 
 
 def process_args(args):
@@ -175,10 +204,13 @@ def process_args(args):
                     'sklearn-friendly format.')
 
     parser.add_argument(dest='feature_path', action='store',
-                        type=str, help='Path to a directory of tfrecords')
+                        type=str, help='Path to a directory of `*.tfrecords`')
 
     parser.add_argument(dest='output_path', type=str, action='store',
                         help='Path to store output npy and csv files')
+
+    parser.add_argument('--prefix', type=str, default='',
+                        help='File prefix for writing outputs.')
 
     return parser.parse_args(args)
 
@@ -186,4 +218,4 @@ def process_args(args):
 if __name__ == '__main__':
     args = process_args(sys.argv[1:])
     tf_files = glob.glob(os.path.join(args.feature_path, "*.tfrecord"))
-    convert_dataset(tf_files, args.output_path)
+    convert_dataset(tf_files, args.output_path, args.prefix)
