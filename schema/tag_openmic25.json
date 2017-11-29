@@ -1,0 +1,35 @@
+{"tag_openmic25":
+    {
+        "value": {
+            "enum": [
+                "accordion",
+                "bagpipes",
+                "banjo",
+                "bass",
+                "cello",
+                "clarinet",
+                "cymbals",
+                "drums",
+                "flute",
+                "guitar",
+                "harmonica",
+                "harp",
+                "mallet_percussion",
+                "mandolin",
+                "oboe",
+                "organ",
+                "piano",
+                "saxophone",
+                "synthesizer",
+                "trumpet",
+                "trombone",
+                "tuba",
+                "ukulele",
+                "violin",
+                "voice"
+            ]
+        },
+        "dense": false,
+        "description": "Open-mic 25 instruments"
+    }
+}

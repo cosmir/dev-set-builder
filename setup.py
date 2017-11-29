@@ -32,7 +32,7 @@ setup(
     license='?',
     install_requires=[
         'pandas',
-        'numpy>=1.8.0',
+        'numpy>=1.12',
         'scipy',
         'resampy',
         'tensorflow',
