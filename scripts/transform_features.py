@@ -19,12 +19,12 @@ import os
 import pandas as pd
 import sys
 import tensorflow as tf
-import warnings
 
 START = 'start_time_seconds'
 VID_ID = 'video_id'
 LABEL = 'labels'
 FEAT_NAME = 'audio_embedding'
+TIME = 'time'
 
 
 def filebase(fname):
@@ -36,8 +36,7 @@ def safe_makedirs(dpath):
         os.makedirs(dpath)
 
 
-def bytestring_to_record(example, feature_shape=(10, 128), on_mismatch='skip',
-                         fill_value=128):
+def bytestring_to_record(example):
     """Convert a serialized tf.SequenceExample to a dict of python/numpy types.
 
     Parameters
@@ -65,9 +64,11 @@ def bytestring_to_record(example, feature_shape=(10, 128), on_mismatch='skip',
 
     Returns
     -------
-    data : dict
-        Object containing the named objects of the tf.SequenceExample. May be
-        empty if the features are mismatched.
+    features : np.array, shape=(n, 128)
+        Array of feature coefficients over time (axis=0).
+
+    meta : pd.DataFrame, len=n
+        Corresponding labels and metadata for these features.
     """
     rec = tf.train.SequenceExample.FromString(example)
     start_time = rec.context.feature[START].float_list.value[0]
@@ -75,51 +76,25 @@ def bytestring_to_record(example, feature_shape=(10, 128), on_mismatch='skip',
     labels = list(rec.context.feature[LABEL].int64_list.value)
     features = [b.bytes_list.value
                 for b in rec.feature_lists.feature_list[FEAT_NAME].feature]
-    X = np.asarray([np.frombuffer(_[0], dtype=np.uint8) for _ in features])
+    features = np.asarray([np.frombuffer(_[0], dtype=np.uint8)
+                           for _ in features])
+    if features.ndim == 1:
+        features = features.reshape(1, -1)
 
-    data = dict()
-    if X.shape == feature_shape:
-        data.update(**{FEAT_NAME: X, VID_ID: video_id,
-                       LABEL: labels, START: start_time})
-    elif on_mismatch == 'strict':
-        raise ValueError("Expected features to have shape {}; actual {}"
-                         .format(feature_shape, X.shape))
-    elif on_mismatch == 'skip':
-        warnings.warn("Expected features to have shape {}; actual {}"
-                      .format(feature_shape, X.shape))
-
-    elif on_mismatch == 'coerce':
-        raise NotImplementedError("`coerce` not yet implemented :o(")
-
-    return data
+    meta = pd.DataFrame.from_records(
+        data=[{VID_ID: video_id, LABEL: labels,
+               TIME: np.uint8(start_time + t)}
+              for t in range(len(features))])
+    return features, meta
 
 
-def load_tfrecord(fname, feature_shape=(10, 128), on_mismatch='skip',
-                  fill_value=128, n_jobs=1, verbose=0):
+def load_tfrecord(fname, n_jobs=1, verbose=0):
     """Transform a YouTube-8M style tfrecord file to numpy / pandas objects.
 
     Parameters
     ----------
     fname : str
         Filepath on disk to read.
-
-    feature_shape : tuple, len=2
-        Expected shape of the feature array.
-
-    on_mismatch : str, default='skip'
-        Behavior of the function in the event that the features are *not* the
-        expected shape, one of:
-
-         * 'skip': Return an empty object
-         * 'coerce': Backfill with zeros or slice, depending on the mismatch;
-            In the event that the observed features are smaller, will use
-            `fill_value` to backfill.
-         * 'strict': Will raise a ValueError if there is any discrepancy.
-
-    fill_value : int, default=128
-        Fill-value for feature arrays that need to be extended. Note that in
-        the AudioSet representation, features are uint8 encoded, i.e. 128
-        corresponds to zero-mean.
 
     n_jobs : int, default=-2
         Number of cores to use, defaults to all but one.
@@ -129,30 +104,21 @@ def load_tfrecord(fname, feature_shape=(10, 128), on_mismatch='skip',
 
     Returns
     -------
-    features : np.array, shape=(n_samples, n_steps, n_coeffs)
-        Batch of observations.
+    features : np.array, shape=(n_obs, n_coeffs)
+        All observations, concatenated together,
 
     meta : pd.DataFrame
         Table of metadata aligned to the features, indexed by `filebase.idx`
     """
     dfx = delayed(bytestring_to_record)
     pool = Parallel(n_jobs=n_jobs, verbose=verbose)
-    kwargs = dict(feature_shape=feature_shape, fill_value=fill_value,
-                  on_mismatch=on_mismatch)
-    records = pool(dfx(x, **kwargs)
-                   for x in tf.python_io.tf_record_iterator(fname))
-
-    # Unpack features and skip any malformed objects.
-    features = np.array([data.pop(FEAT_NAME) for data in records if data])
-    key = filebase(fname)
-    index = ["{}.{:04d}".format(key, n)
-             for n, data in enumerate(records) if data]
-    meta = pd.DataFrame.from_records(filter(None, records), index=index)
+    results = pool(dfx(x) for x in tf.python_io.tf_record_iterator(fname))
+    features = np.concatenate([xy[0] for xy in results], axis=0)
+    meta = pd.concat([xy[1] for xy in results], axis=0, ignore_index=True)
     return features, meta
 
 
-def convert_dataset(filenames, outdir, prefix='', feature_shape=(10, 128),
-                    on_mismatch='skip', fill_value=128, n_jobs=-2, verbose=1):
+def convert_dataset(filenames, outdir, prefix='', n_jobs=-2, verbose=1):
     """Convert the TF version of AudioSet to NumPy / Pandas formats.
 
     Parameters
@@ -183,20 +149,17 @@ def convert_dataset(filenames, outdir, prefix='', feature_shape=(10, 128),
     """
     dfx = delayed(load_tfrecord)
     pool = Parallel(n_jobs=n_jobs, verbose=verbose)
-    kwargs = dict(feature_shape=feature_shape, fill_value=fill_value,
-                  on_mismatch=on_mismatch, n_jobs=1, verbose=0)
+    kwargs = dict(n_jobs=1, verbose=0)
     results = pool(dfx(fn, **kwargs) for fn in filenames)
 
-    # Filter any fully empty results
-    results = filter(lambda xy: bool(len(xy[0])), results)
-    X = np.concatenate([xy[0] for xy in results], axis=0)
+    features = np.concatenate([xy[0] for xy in results], axis=0)
     safe_makedirs(outdir)
-    x_out = os.path.join(outdir, "{}features.npy".format(prefix))
-    np.save(x_out, X)
-    Y = pd.concat([xy[1] for xy in results])
-    y_out = os.path.join(outdir, "{}labels.csv".format(prefix))
-    Y.to_csv(y_out, index_label="index")
-    return all([os.path.exists(fn) for fn in (x_out, y_out)])
+    features_file = os.path.join(outdir, "{}features.npy".format(prefix))
+    np.save(features_file, features)
+    meta = pd.concat([xy[1] for xy in results], axis=0, ignore_index=True)
+    meta_file = os.path.join(outdir, "{}labels.csv".format(prefix))
+    meta.to_csv(meta_file, index=False)
+    return all([os.path.exists(fn) for fn in (features_file, meta_file)])
 
 
 def process_args(args):

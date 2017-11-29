@@ -29,30 +29,33 @@ Note that, in this process, there are around 25k feature sequences that are shor
 
 ![]()  # Image of data snapshot goes here.
 
-### Instruments
+### Instrument Distributions
+
+Training
 
 | Instrument           | Expected | Actual   | Missing |
 | -------------------- | --------:| --------:| -------:|
-| guitar               |    56926 |    56398 |   0.93% |
-| violin               |    28065 |    27964 |   0.36% |
-| drums                |    26331 |    25989 |   1.30% |
-| piano                |    12744 |    12649 |   0.75% |
-| bass                 |     8549 |     8422 |   1.49% |
-| mallet_percussion    |     7257 |     7109 |   2.04% |
-| voice                |     6611 |     6538 |   1.10% |
-| cymbals              |     5365 |     5296 |   1.29% |
-| ukulele              |     5232 |     5169 |   1.20% |
-| cello                |     5215 |     5147 |   1.30% |
-| synthesizer          |     4981 |     4920 |   1.22% |
-| flute                |     4721 |     4648 |   1.55% |
-| trumpet              |     3771 |     3692 |   2.09% |
-| organ                |     3578 |     3456 |   3.41% |
-| saxophone            |     3013 |     2949 |   2.12% |
+| guitar               |    56926 |    56489 |   0.77% |
+| violin               |    28065 |    28001 |   0.23% |
+| drums                |    26331 |    26076 |   0.97% |
+| piano                |    12744 |    12654 |   0.71% |
+| bass                 |     8549 |     8428 |   1.42% |
+| mallet_percussion    |     7257 |     7128 |   1.78% |
+| voice                |     6611 |     6549 |   0.94% |
+| cymbals              |     5365 |     5301 |   1.19% |
+| ukulele              |     5232 |     5172 |   1.15% |
+| cello                |     5215 |     5148 |   1.28% |
+| synthesizer          |     4981 |     4921 |   1.20% |
+| flute                |     4721 |     4659 |   1.31% |
+| trumpet              |     3771 |     3707 |   1.70% |
+| organ                |     3578 |     3458 |   3.35% |
+| saxophone            |     3013 |     2950 |   2.09% |
 | accordion            |     2833 |     2772 |   2.15% |
-| trombone             |     2731 |     2664 |   2.45% |
-| banjo                |     2396 |     2335 |   2.55% |
+| trombone             |     2731 |     2666 |   2.38% |
+| banjo                |     2396 |     2336 |   2.50% |
 | mandolin             |     2312 |     2252 |   2.60% |
-| harmonica            |     2156 |     2092 |   2.97% |
-| clarinet             |     2061 |     1996 |   3.15% |
-| harp                 |     1983 |     1920 |   3.18% |
+| harmonica            |     2156 |     2095 |   2.83% |
+| clarinet             |     2061 |     1998 |   3.06% |
+| harp                 |     1983 |     1921 |   3.13% |
 | bagpipes             |     1715 |     1655 |   3.50% |
+
