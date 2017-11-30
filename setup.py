@@ -39,7 +39,8 @@ setup(
         'tqdm',
         'librosa',
         'jams>=0.3',
-        'dask>=0.15.0'
+        'dask>=0.15.0',
+        'tqdm'
     ],
     extras_require={},
     scripts=['scripts/featurefy.py']
