@@ -12,101 +12,16 @@ Will produce two files:
 '''
 
 import argparse
+import audioset.util as util
 import glob
 from joblib import Parallel, delayed
 import numpy as np
 import os
 import pandas as pd
 import sys
-import tensorflow as tf
-
-from audioset import AUDIO_EMBEDDING_FEATURE_NAME, LABELS
-from audioset import START_TIME, TIME, VIDEO_ID
-import audioset.util as util
 
 
-def bytestring_to_record(example):
-    """Convert a serialized tf.SequenceExample to a dict of python/numpy types.
-
-    Parameters
-    ----------
-    example : str
-        Serialized tf.SequenceExample
-
-    feature_shape : tuple, len=2
-        Expected shape of the feature array.
-
-    on_mismatch : str, default='skip'
-        Behavior of the function in the event that the features are *not* the
-        expected shape, one of:
-
-         * 'skip': Return an empty object
-         * 'coerce': Backfill with zeros or slice, depending on the mismatch;
-            In the event that the observed features are smaller, will use
-            `fill_value` to backfill.
-         * 'strict': Will raise a ValueError if there is any discrepancy.
-
-    fill_value : int, default=128
-        Fill-value for feature arrays that need to be extended. Note that in
-        the AudioSet representation, features are uint8 encoded, i.e. 128
-        corresponds to zero-mean.
-
-    Returns
-    -------
-    features : np.array, shape=(n, 128)
-        Array of feature coefficients over time (axis=0).
-
-    meta : pd.DataFrame, len=n
-        Corresponding labels and metadata for these features.
-    """
-    rec = tf.train.SequenceExample.FromString(example)
-    start_time = rec.context.feature[START_TIME].float_list.value[0]
-    vid_id = rec.context.feature[VIDEO_ID].bytes_list.value[0].decode('utf-8')
-    labels = list(rec.context.feature[LABELS].int64_list.value)
-    data = rec.feature_lists.feature_list[AUDIO_EMBEDDING_FEATURE_NAME]
-    features = [b.bytes_list.value for b in data.feature]
-    features = np.asarray([np.frombuffer(_[0], dtype=np.uint8)
-                           for _ in features])
-    if features.ndim == 1:
-        features = features.reshape(1, -1)
-
-    rows = [{VIDEO_ID: vid_id, LABELS: labels, TIME: np.uint16(start_time + t)}
-            for t in range(len(features))]
-
-    return features, pd.DataFrame.from_records(data=rows)
-
-
-def load_tfrecord(fname, n_jobs=1, verbose=0):
-    """Transform a YouTube-8M style tfrecord file to numpy / pandas objects.
-
-    Parameters
-    ----------
-    fname : str
-        Filepath on disk to read.
-
-    n_jobs : int, default=-2
-        Number of cores to use, defaults to all but one.
-
-    verbose : int, default=0
-        Verbosity level for loading.
-
-    Returns
-    -------
-    features : np.array, shape=(n_obs, n_coeffs)
-        All observations, concatenated together,
-
-    meta : pd.DataFrame
-        Table of metadata aligned to the features, indexed by `filebase.idx`
-    """
-    dfx = delayed(bytestring_to_record)
-    pool = Parallel(n_jobs=n_jobs, verbose=verbose)
-    results = pool(dfx(x) for x in tf.python_io.tf_record_iterator(fname))
-    features = np.concatenate([xy[0] for xy in results], axis=0)
-    meta = pd.concat([xy[1] for xy in results], axis=0, ignore_index=True)
-    return features, meta
-
-
-def convert_dataset(filenames, outdir, prefix='', n_jobs=-2, verbose=1):
+def main(filenames, outdir, prefix='', n_jobs=-2, verbose=1):
     """Convert the TF version of AudioSet to NumPy / Pandas formats.
 
     Parameters
@@ -135,7 +50,7 @@ def convert_dataset(filenames, outdir, prefix='', n_jobs=-2, verbose=1):
     success : bool
         True if both files are written successfully.
     """
-    dfx = delayed(load_tfrecord)
+    dfx = delayed(util.load_tfrecord)
     pool = Parallel(n_jobs=n_jobs, verbose=verbose)
     kwargs = dict(n_jobs=1, verbose=0)
     results = pool(dfx(fn, **kwargs) for fn in filenames)
@@ -171,4 +86,4 @@ def process_args(args):
 if __name__ == '__main__':
     args = process_args(sys.argv[1:])
     tf_files = glob.glob(os.path.join(args.feature_path, "*.tfrecord"))
-    convert_dataset(tf_files, args.output_path, args.prefix)
+    main(tf_files, args.output_path, args.prefix)
