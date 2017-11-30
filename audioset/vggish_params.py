@@ -51,3 +51,8 @@ INPUT_TENSOR_NAME = INPUT_OP_NAME + ':0'
 OUTPUT_OP_NAME = 'vggish/embedding'
 OUTPUT_TENSOR_NAME = OUTPUT_OP_NAME + ':0'
 AUDIO_EMBEDDING_FEATURE_NAME = 'audio_embedding'
+
+START_TIME = 'start_time_seconds'
+VIDEO_ID = 'video_id'
+LABELS = 'labels'
+TIME = 'time'
