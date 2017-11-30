@@ -1,16 +1,20 @@
 #!/usr/bin/env python
-'''Convert the AudioSet features into an sklearn-friendly format.
+'''Reduce a dataset on a subset index with binary-encoded classes.
 
 Example
 -------
-$ ./openmic_subset.py /path/to/audioset_features.npy \
+$ ./filter_with_classes.py /path/to/audioset_features.npy \
     /path/to/audioset_labels.csv \
-    openmic25_index.json \
-    /path/to/outputs --prefix openmic_
+    data/openmic25_video_labels.json \
+    video_id \
+    data/openmic25_class_map.json \
+    /path/to/outputs \
+    --prefix openmic_
 
-Will produce two files:
-    /path/to/outputs/openmic_features.npy
-    /path/to/outputs/openmic_labels.npy
+Will produce three files:
+    /path/to/outputs/openmic_features.npy – X_in, shape=[n, 128]
+    /path/to/outputs/openmic_classes.npy - y_true, shape=[n, 23]
+    /path/to/outputs/openmic_labels.csv - provenance metadata
 '''
 
 import argparse
