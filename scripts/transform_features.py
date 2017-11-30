@@ -20,20 +20,9 @@ import pandas as pd
 import sys
 import tensorflow as tf
 
-START = 'start_time_seconds'
-VID_ID = 'video_id'
-LABEL = 'labels'
-FEAT_NAME = 'audio_embedding'
-TIME = 'time'
-
-
-def filebase(fname):
-    return os.path.splitext(os.path.basename(fname))[0]
-
-
-def safe_makedirs(dpath):
-    if not os.path.exists(dpath) and dpath:
-        os.makedirs(dpath)
+from audioset import AUDIO_EMBEDDING_FEATURE_NAME, LABELS
+from audioset import START_TIME, TIME, VIDEO_ID
+import audioset.util as util
 
 
 def bytestring_to_record(example):
@@ -71,21 +60,20 @@ def bytestring_to_record(example):
         Corresponding labels and metadata for these features.
     """
     rec = tf.train.SequenceExample.FromString(example)
-    start_time = rec.context.feature[START].float_list.value[0]
-    video_id = rec.context.feature[VID_ID].bytes_list.value[0].decode('utf-8')
-    labels = list(rec.context.feature[LABEL].int64_list.value)
-    features = [b.bytes_list.value
-                for b in rec.feature_lists.feature_list[FEAT_NAME].feature]
+    start_time = rec.context.feature[START_TIME].float_list.value[0]
+    vid_id = rec.context.feature[VIDEO_ID].bytes_list.value[0].decode('utf-8')
+    labels = list(rec.context.feature[LABELS].int64_list.value)
+    data = rec.feature_lists.feature_list[AUDIO_EMBEDDING_FEATURE_NAME]
+    features = [b.bytes_list.value for b in data.feature]
     features = np.asarray([np.frombuffer(_[0], dtype=np.uint8)
                            for _ in features])
     if features.ndim == 1:
         features = features.reshape(1, -1)
 
-    meta = pd.DataFrame.from_records(
-        data=[{VID_ID: video_id, LABEL: labels,
-               TIME: np.uint8(start_time + t)}
-              for t in range(len(features))])
-    return features, meta
+    rows = [{VIDEO_ID: vid_id, LABELS: labels, TIME: np.uint16(start_time + t)}
+            for t in range(len(features))]
+
+    return features, pd.DataFrame.from_records(data=rows)
 
 
 def load_tfrecord(fname, n_jobs=1, verbose=0):
@@ -153,7 +141,7 @@ def convert_dataset(filenames, outdir, prefix='', n_jobs=-2, verbose=1):
     results = pool(dfx(fn, **kwargs) for fn in filenames)
 
     features = np.concatenate([xy[0] for xy in results], axis=0)
-    safe_makedirs(outdir)
+    util.safe_makedirs(outdir)
     features_file = os.path.join(outdir, "{}features.npy".format(prefix))
     np.save(features_file, features)
     meta = pd.concat([xy[1] for xy in results], axis=0, ignore_index=True)
