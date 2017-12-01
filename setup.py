@@ -32,7 +32,7 @@ setup(
     license='?',
     install_requires=[
         'pandas',
-        'numpy>=1.8.0',
+        'numpy>=1.12',
         'scipy',
         'resampy',
         'tensorflow',
@@ -43,5 +43,7 @@ setup(
         'tqdm'
     ],
     extras_require={},
-    scripts=['scripts/featurefy.py']
+    scripts=['scripts/featurefy.py',
+             'scripts/filter_with_classes.py',
+             'scripts/transform_features.py']
 )
