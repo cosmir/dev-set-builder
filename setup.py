@@ -43,5 +43,7 @@ setup(
         'tqdm'
     ],
     extras_require={},
-    scripts=['scripts/featurefy.py']
+    scripts=['scripts/featurefy.py',
+             'scripts/filter_with_classes.py',
+             'scripts/transform_features.py']
 )
