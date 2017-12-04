@@ -26,7 +26,7 @@ import sys
 
 
 def main(src_features, src_labels, subset_index, column,
-         class_map, outdir, prefix=''):
+         class_map, num_background, outdir, prefix='', random_state=None):
     """Produce a filtered subset given a dataset and a set of IDs.
 
     Parameters
@@ -47,12 +47,18 @@ def main(src_features, src_labels, subset_index, column,
     class_map : dict
         Mapping between labels (in subset_index) to integer positions.
 
+    num_background : int
+        Number of background class samples to draw.
+
     outdir : str
         Path for writing the various outputs.
 
     prefix : str, default=''
         Optional string with which to prefix created files, like:
             {prefix}features.npy, {prefix}labels.csv, {prefix}classes.npy
+
+    random_state : int, default=None
+        Seed to use for the random number generator.
 
     Returns
     -------
@@ -66,7 +72,18 @@ def main(src_features, src_labels, subset_index, column,
     dst_labels = src_labels.join(dst_labels, on=column, how='inner')
     del dst_labels['keep']
 
-    dst_features = src_features[dst_labels.index.values]
+    dst_index = dst_labels.index
+    dst_features = src_features[dst_index]
+    diff_index = src_labels.index.difference(dst_index)
+
+    if num_background > 0:
+        background_labels = src_labels.loc[diff_index].sample(
+            num_background, random_state=random_state)
+
+        dst_features = np.concatenate(
+            [dst_features, src_features[background_labels.index]], axis=0)
+        dst_labels = pd.concat([dst_labels, background_labels], axis=0)
+
     features_file = os.path.join(outdir, "{}features.npy".format(prefix))
     np.save(features_file, dst_features)
 
@@ -75,7 +92,7 @@ def main(src_features, src_labels, subset_index, column,
 
     y_true = np.zeros([len(dst_features), len(class_map)], dtype=bool)
     for n, gid in enumerate(dst_labels[column]):
-        for y_label in subset_index[gid]:
+        for y_label in subset_index.get(gid, []):
             y_true[n, class_map[y_label]] = True
 
     y_true_file = os.path.join(outdir, "{}classes.npy".format(prefix))
