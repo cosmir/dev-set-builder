@@ -25,8 +25,13 @@ import pandas as pd
 import sys
 
 
+def parse_labels(s):
+    return [int(v.strip("L")) for v in s.strip("[]").split(",")]
+
+
 def main(src_features, src_labels, subset_index, column,
-         class_map, num_background, outdir, prefix='', random_state=None):
+         class_map, num_background, outdir, weak_null_classes=None,
+         prefix='', random_state=None):
     """Produce a filtered subset given a dataset and a set of IDs.
 
     Parameters
@@ -53,6 +58,9 @@ def main(src_features, src_labels, subset_index, column,
     outdir : str
         Path for writing the various outputs.
 
+    weak_null_classes : list or set, default=None
+        Object containing integer label indices to be filtered when buidling.
+
     prefix : str, default=''
         Optional string with which to prefix created files, like:
             {prefix}features.npy, {prefix}labels.csv, {prefix}classes.npy
@@ -66,6 +74,11 @@ def main(src_features, src_labels, subset_index, column,
         True if all files were created correctly.
     """
 
+    def is_strong_null(row):
+        """Return True if the labels correspond to a strong null condition."""
+        return not any([y in weak_null_classes
+                        for y in parse_labels(row['labels'])])
+
     gids = sorted(list(subset_index.keys()))
 
     dst_labels = pd.DataFrame(data=dict(keep=True), index=gids)
@@ -74,15 +87,32 @@ def main(src_features, src_labels, subset_index, column,
 
     dst_index = dst_labels.index
     dst_features = src_features[dst_index]
-    diff_index = src_labels.index.difference(dst_index)
 
     if num_background > 0:
-        background_labels = src_labels.loc[diff_index].sample(
-            num_background, random_state=random_state)
+        null_index = src_labels.index.difference(dst_index)
 
+        # Need to keep labels..
+        null_labels = src_labels.loc[null_index]
+        del null_labels['time']
+        null_labels.drop_duplicates(inplace=True)
+
+        # Tag videos that are sufficiently strong nulls
+        strong_null_index = null_labels.apply(is_strong_null, axis=1)
+        strong_null_gids = null_labels[strong_null_index][column].values
+
+        # Slice a subset of corresponding GIDs
+        rng = np.random.RandomState(random_state)
+        rng.shuffle(strong_null_gids)
+        strong_null_labels = pd.DataFrame(
+            data=dict(keep=True), index=strong_null_gids[:num_background])
+        strong_null_labels = src_labels.join(strong_null_labels,
+                                             on=column, how='inner')
+        del strong_null_labels['keep']
+
+        # Concatenate strong nulls
         dst_features = np.concatenate(
-            [dst_features, src_features[background_labels.index]], axis=0)
-        dst_labels = pd.concat([dst_labels, background_labels], axis=0)
+            [dst_features, src_features[strong_null_labels.index]], axis=0)
+        dst_labels = pd.concat([dst_labels, strong_null_labels], axis=0)
 
     features_file = os.path.join(outdir, "{}features.npy".format(prefix))
     np.save(features_file, dst_features)
@@ -121,8 +151,15 @@ def process_args(args):
                         help='Path to a mapping of class labels to integers.')
     parser.add_argument(dest='output_path', type=str, action='store',
                         help='Path to store output npy and csv files')
+    parser.add_argument(dest='--num_background', type=int, default=0,
+                        help='Number of background samples to draw.')
+    parser.add_argument(dest='--weak_null_classes', type=str, default=None,
+                        help='JSON object of index values to filter when '
+                             'sampling a null set.')
     parser.add_argument('--prefix', type=str, default='',
                         help='File prefix for writing outputs.')
+    parser.add_argument(dest='--random_state', type=int, default=None,
+                        help='Seed for random subsample.')
 
     return parser.parse_args(args)
 
@@ -136,7 +173,14 @@ if __name__ == '__main__':
         subset_index = json.load(fp)
 
     with open(args.class_map_file, 'r') as fp:
-        class_map = json.load(fp)
+        class_map = json.load(fp)['classes']
+
+    weak_null_classes = []
+    if args.weak_null_classes:
+        with open(args.class_map_file, 'r') as fp:
+            weak_null_classes += json.load(fp)['index']
 
     main(src_features, src_labels, subset_index, args.column,
-         class_map, args.outdir, args.prefix)
+         class_map, args.num_background,
+         weak_null_classes=weak_null_classes,
+         outdir=args.outdir, prefix=args.prefix)

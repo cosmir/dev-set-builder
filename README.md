@@ -23,15 +23,24 @@ corpus_file.h5
 
 The original TensorFlow-friendly dump of the VGGish features for AudioSet is made [freely available online](https://research.google.com/audioset/download.html). Here, VGGish features are sharded into 4096 nested `tf.SequenceExample`s, with each shard containing several hundred excerpts (between 300-1000, averaging around 900).
 
-While this works well for TensorFlow, the format can be a bit overwraught for more Pythonic implementations, e.g. `sklearn`. Here, we provide a `transforms_features.py` script that unpacks the features into a large(ish) NumPy tensor (2.4GB) with shape `[examples, time, feature]`, and a CSV file of metadata, tracking both labels and provenance info, with the columns `[index, labels, start_time_seconds, video_id]`. Index keys are unique, and join the original two-character shard ID and integer position of the example in its source shard, e.g. `i8.0013` is the 14th example (zero-indexed) in the `i8.tfrecord` shard.
+While this works well for TensorFlow, the format can be a bit overwraught for more Pythonic implementations, e.g. `sklearn`. Here, we provide a `transforms_features.py` script that unpacks the features into a large(ish) NumPy tensor (2.4GB) with shape `[examples * time, feature]`, and a CSV file of metadata, tracking both labels and provenance info, with the columns `[index, labels, time, video_id]`. The index of this table corresponds exactly to the feature array.
 
-Note that, in this process, there are around 25k feature sequences that are shorter than 10sec, or 1% of the data. For normalization purposes, e.g. getting a nice tensor, we choose to drop those examples on the floor. This leaves us with an unbalanced dataset of just over 2M examples.
+These artifacts are made freely available here:
+
+* [AudioSet Train Features]()
+* [AudioSet Train Labels]()
+* [AudioSet Test Features]()
+* [AudioSet Test Labels]()
 
 ![]()  # Image of data snapshot goes here.
 
-### Instrument Distributions
+### OpenMIC-23 Subset
 
-Training
+As a final preprocessing step to build our development set, the full AudioSet is filtered on OpenMIC instrument classes and the labels are transformed into a sparse indicator (boolean) array, for easy use with Pythonic ML frameworks, e.g. `sklearn`.
+
+#### Training Distribution
+
+The OpenMIC subset for the unbalanced training set looks like the following:
 
 | Instrument           | Expected | Actual   | Missing |
 | -------------------- | --------:| --------:| -------:|
@@ -58,4 +67,6 @@ Training
 | clarinet             |     2061 |     1998 |   3.06% |
 | harp                 |     1983 |     1921 |   3.13% |
 | bagpipes             |     1715 |     1655 |   3.50% |
+| none of the above    |  1841243 |     8000 |    --   |
 
+Note that we backfill with 8000 randomly sampled observations, chosen to be reasonably disjoint with the given instrument classes.
