@@ -40,7 +40,9 @@ setup(
         'librosa',
         'jams>=0.3',
         'dask>=0.15.0',
-        'tqdm'
+        'tqdm',
+        'scikit-learn',
+        'keras'
     ],
     extras_require={},
     scripts=['scripts/featurefy.py',
