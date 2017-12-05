@@ -38,7 +38,7 @@ def load_input(filename):
     return audioset.vggish_input.waveform_to_examples(y, sr)
 
 
-def run_model(files_in, outpath):
+def main(files_in, outpath):
 
     pproc = audioset.vggish_postprocess.Postprocessor(audioset.PCA_PARAMS)
     success = []
@@ -93,4 +93,4 @@ if __name__ == '__main__':
 
     files_in = load_files_in(args.input_list)
 
-    run_model(files_in, args.output_path)
+    main(files_in, args.output_path)
