@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
     weak_null_classes = []
     if args.weak_null_classes:
-        with open(args.class_map_file, 'r') as fp:
+        with open(args.weak_null_classes, 'r') as fp:
             weak_null_classes += json.load(fp)['index']
 
     main(src_features, src_labels, subset_index, args.column,
