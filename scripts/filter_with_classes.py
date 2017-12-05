@@ -150,7 +150,7 @@ def process_args(args):
                         help='Column in the source table to filter on.')
     parser.add_argument(dest='class_map_file', type=str, action='store',
                         help='Path to a mapping of class labels to integers.')
-    parser.add_argument(dest='output_path', type=str, action='store',
+    parser.add_argument(dest='outdir', type=str, action='store',
                         help='Path to store output npy and csv files')
     parser.add_argument('--num_background', type=int, default=0,
                         help='Number of background samples to draw.')
