@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# coding: utf8
 '''Reduce a dataset on a subset index with binary-encoded classes.
 
 Example
@@ -151,14 +152,14 @@ def process_args(args):
                         help='Path to a mapping of class labels to integers.')
     parser.add_argument(dest='output_path', type=str, action='store',
                         help='Path to store output npy and csv files')
-    parser.add_argument(dest='--num_background', type=int, default=0,
+    parser.add_argument('--num_background', type=int, default=0,
                         help='Number of background samples to draw.')
-    parser.add_argument(dest='--weak_null_classes', type=str, default=None,
+    parser.add_argument('--weak_null_classes', type=str, default=None,
                         help='JSON object of index values to filter when '
                              'sampling a null set.')
     parser.add_argument('--prefix', type=str, default='',
                         help='File prefix for writing outputs.')
-    parser.add_argument(dest='--random_state', type=int, default=None,
+    parser.add_argument('--random_state', type=int, default=None,
                         help='Seed for random subsample.')
 
     return parser.parse_args(args)
