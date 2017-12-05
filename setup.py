@@ -42,7 +42,8 @@ setup(
         'dask>=0.15.0',
         'tqdm',
         'scikit-learn>=0.18',
-        'keras'
+        'keras',
+        'h5py'
     ],
     extras_require={},
     scripts=['scripts/featurefy.py',
