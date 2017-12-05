@@ -41,7 +41,7 @@ setup(
         'jams>=0.3',
         'dask>=0.15.0',
         'tqdm',
-        'scikit-learn',
+        'scikit-learn>=0.18',
         'keras'
     ],
     extras_require={},
