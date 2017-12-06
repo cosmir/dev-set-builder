@@ -1,5 +1,6 @@
 import pytest
 
+import json
 import numpy as np
 import os
 import yaml
@@ -85,3 +86,15 @@ def test_compute_stats():
     with pytest.raises(ValueError):
         audioset.openmic.compute_stats(y_true, y_proba, folds, labels,
                                        [0.5, 0.2])
+
+
+def test_generate_configs():
+    num_configs = 5
+    k_folds = 4
+    configs = audioset.openmic.generate_configs(num_configs, 23, 'deleteme-',
+                                                random_state=13579)
+    assert len(configs) == num_configs * k_folds
+    assert len(configs) == len(set([kw['outputs']['name'] for kw in configs]))
+
+    for kwargs in configs[::k_folds]:
+        assert audioset.openmic.build_model(**kwargs['model_args']) is not None
