@@ -1,5 +1,6 @@
 import pytest
 
+import librosa.output
 import numpy as np
 import os
 import pandas as pd
@@ -12,6 +13,14 @@ import transform_features
 def test_featurefy_main(audio_file, tmpdir):
     success = featurefy.main([audio_file], str(tmpdir))
     assert all(success)
+
+
+def test_featurefy_main_garbage_audio(tmpdir):
+    audio_file = os.path.join(str(tmpdir), "empty_file.wav")
+    librosa.output.write_wav(audio_file, np.array([]), 44100)
+
+    success = featurefy.main([audio_file], str(tmpdir))
+    assert not all(success)
 
 
 def test_transform_features_main(tfrecords, tmpdir):
