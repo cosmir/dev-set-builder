@@ -6,17 +6,29 @@ Boostrapping weak multi-instrument classifiers to build a development dataset wi
 
 ## Install
 
+Before anything else, download the TensorFlow model parameters locally. You can do this with the bash script included.
+
+```bash
+$ cd {repo_root}
+$ ./scripts/download-deps.sh
+```
+
+Be sure to install `audioset` with the `-e` flag, as the resulting scripts depend on this structure. In the future this might leverage something like a package resources; if this is sufficiently important to you, please create an issue.
+
 ```bash
 $ pip install -e .
 ```
 
-## Run it!
+## Running VGGish
+
+After following the installation instructions above, you can either process a single file (via `--file`) or a newline-separated text list of filepaths (via `--input_list`):
 
 ```bash
-$ echo "my/audio/file.wav,my/jams/file.jams" > filelist.csv
-$ python scripts/featurefy.py filelist.csv ./outputs
-$ ls ./outputs
-corpus_file.h5
+$ cd {repo_root}
+$ ./scripts/featurefy.py --file /some/audio/file.wav ./output_dir
+OR
+$ ls /path/to/audio/*wav > file_list.txt
+$ ./scripts/featurefy.py --input_list file_list.txt ./output_dir
 ```
 
 ## MNIST-ifying the AudioSet
