@@ -4,13 +4,17 @@
 
 Example
 -------
-$ ./filter_with_classes.py /path/to/audioset_features.npy \
-    /path/to/audioset_labels.csv \
-    data/openmic25_video_labels.json \
+$ ./scripts/filter_with_classes.py \
+    sklearn_data/audioset_train_features.npy \
+    sklearn_data/audioset_train_labels.csv \
+    data/audioset/openmic25_video_index.json \
     video_id \
     data/openmic25_class_map.json \
-    /path/to/outputs \
-    --prefix openmic_
+    sklearn_data/ \
+    --num_background 8000 \
+    --weak_null_classes data/audioset/generic_music_classes.json \
+    --prefix openmic25_train_ \
+    --random_state 25
 
 Will produce three files:
     /path/to/outputs/openmic_features.npy   X_in, shape=[n, 128]
