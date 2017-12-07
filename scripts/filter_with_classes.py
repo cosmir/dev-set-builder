@@ -13,9 +13,9 @@ $ ./filter_with_classes.py /path/to/audioset_features.npy \
     --prefix openmic_
 
 Will produce three files:
-    /path/to/outputs/openmic_features.npy - X_in, shape=[n, 128]
-    /path/to/outputs/openmic_classes.npy - y_true, shape=[n, 23]
-    /path/to/outputs/openmic_labels.csv - provenance metadata
+    /path/to/outputs/openmic_features.npy   X_in, shape=[n, 128]
+    /path/to/outputs/openmic_classes.npy    y_true, shape=[n, 23]
+    /path/to/outputs/openmic_labels.csv     provenance metadata
 '''
 
 import argparse
