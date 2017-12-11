@@ -135,7 +135,7 @@ def build_model(n_in, width, dropout, activation, batch_norm, opt_kwargs):
     model = Model(inputs=x_in, outputs=z_out)
     opt = OPTS[opt_kwargs.pop('name')](**opt_kwargs)
     model.compile(optimizer=opt, loss='categorical_crossentropy',
-                  metrics=['accuracy'])
+                  metrics=['accuracy', precision, recall, f1])
     return model
 
 
@@ -218,7 +218,7 @@ def fit_model(X, y_true, folds, model_kwargs, labels):
         json.dump(history.history, fp)
 
     # Keras writes 1-indexed files...
-    best_epoch = np.array(history.history['val_acc']).argmax() + 1
+    best_epoch = np.array(history.history['val_f1']).argmax() + 1
     best_param_file = fpath.format(epoch=best_epoch)
     model.load_weights(best_param_file)
     y_proba = model.predict(X, batch_size=8192)
