@@ -1,8 +1,9 @@
 import pytest
 
-import json
+from keras import backend as K
 import numpy as np
 import os
+import sklearn.metrics
 import yaml
 
 import audioset.openmic
@@ -33,6 +34,60 @@ outputs:
   dirname: "./"
   checkpoint_fmt: "weights-{}.h5"
   """)
+
+
+def test_precision():
+    a = np.array([[1, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 0],
+                  [0, 0, 0, 1]])
+    b = np.array([[0.8, 0.2, 0.1, 0.0],
+                  [0.0, 0.2, 0.9, 0.9],
+                  [0.1, 0.7, 0.1, 0.2],
+                  [0.1, 0.0, 0.2, 0.6]])
+    y_true = K.variable(a, dtype='float32')
+    y_proba = K.variable(b, dtype='float32')
+
+    np.testing.assert_almost_equal(
+        K.eval(audioset.openmic.precision(y_true, y_proba)),
+        sklearn.metrics.precision_score(a, b >= 0.5, average='micro'),
+        decimal=5)
+
+
+def test_recall():
+    a = np.array([[1, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 0],
+                  [0, 0, 0, 1]])
+    b = np.array([[0.8, 0.2, 0.1, 0.0],
+                  [0.0, 0.2, 0.9, 0.9],
+                  [0.1, 0.7, 0.1, 0.2],
+                  [0.1, 0.0, 0.2, 0.6]])
+    y_true = K.variable(a, dtype='float32')
+    y_proba = K.variable(b, dtype='float32')
+
+    np.testing.assert_almost_equal(
+        K.eval(audioset.openmic.recall(y_true, y_proba)),
+        sklearn.metrics.recall_score(a, b >= 0.5, average='micro'),
+        decimal=5)
+
+
+def test_f1():
+    a = np.array([[1, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 0],
+                  [0, 0, 0, 1]])
+    b = np.array([[0.8, 0.2, 0.1, 0.0],
+                  [0.0, 0.2, 0.9, 0.9],
+                  [0.1, 0.7, 0.1, 0.2],
+                  [0.1, 0.0, 0.2, 0.6]])
+    y_true = K.variable(a, dtype='float32')
+    y_proba = K.variable(b, dtype='float32')
+
+    np.testing.assert_almost_equal(
+        K.eval(audioset.openmic.f1(y_true, y_proba)),
+        sklearn.metrics.f1_score(a, b >= 0.5, average='micro'),
+        decimal=5)
 
 
 def test_build_model():

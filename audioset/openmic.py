@@ -2,6 +2,7 @@ import copy
 import glob
 import hashlib
 import json
+from keras import backend as K
 from keras.callbacks import ModelCheckpoint
 from keras.layers.normalization import BatchNormalization
 from keras.layers import Input, Dense, Dropout, Activation
@@ -17,6 +18,71 @@ OPTS = {
     "SGD": SGD,
     "RMSprop": RMSprop
 }
+
+
+def precision(y_true, y_pred):
+    """Compute precision between two label indicator / likelihood arrays.
+
+    Note: This assumes a 0.5 bias point.
+
+    Parameters
+    ----------
+    y_true, y_pred : ndarrays, shape=(n_samples, k_classes)
+        True and estimated label indicator arrays.
+
+    Returns
+    -------
+    precision : scalar
+        Precision score between the inputs.
+    """
+    y_true_bin = K.round(K.clip(y_true, 0, 1))
+    y_pred_bin = K.round(K.clip(y_pred, 0, 1))
+    true_positives = K.sum(y_true_bin * y_pred_bin)
+    predicted_positives = K.sum(y_pred_bin)
+    return true_positives / (predicted_positives + K.epsilon())
+
+
+def recall(y_true, y_pred):
+    """Compute recall between two label indicator / likelihood arrays.
+
+    Parameters
+    ----------
+    y_true, y_pred : ndarrays, shape=(n_samples, k_classes)
+        True and estimated label indicator arrays.
+
+    Returns
+    -------
+    recall : scalar
+        Recall score between the inputs.
+    """
+    y_true_bin = K.round(K.clip(y_true, 0, 1))
+    y_pred_bin = K.round(K.clip(y_pred, 0, 1))
+    true_positives = K.sum(y_true_bin * y_pred_bin)
+    possible_positives = K.sum(y_true_bin)
+    return true_positives / (possible_positives + K.epsilon())
+
+
+def f1(y_true, y_pred):
+    """Compute f1-score between two label indicator / likelihood arrays.
+
+    Note: If there are no true positives, fix the F score at 0 like sklearn.
+
+    Parameters
+    ----------
+    y_true, y_pred : ndarrays, shape=(n_samples, k_classes)
+        True and estimated indicator arrays.
+
+    Returns
+    -------
+    f1_score : scalar
+        F1 score over the inputs.
+    """
+    if K.sum(K.round(K.clip(y_true, 0, 1))) == 0:
+        return 0
+
+    p = precision(y_true, y_pred)
+    r = recall(y_true, y_pred)
+    return (2.0 * p * r) / (p + r + K.epsilon())
 
 
 def build_model(n_in, width, dropout, activation, batch_norm, opt_kwargs):
