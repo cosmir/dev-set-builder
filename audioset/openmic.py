@@ -3,7 +3,7 @@ import glob
 import hashlib
 import json
 from keras import backend as K
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, TerminateOnNaN
 from keras.layers.normalization import BatchNormalization
 from keras.layers import Input, Dense, Dropout, Activation
 from keras.models import Model
@@ -206,7 +206,7 @@ def fit_model(X, y_true, folds, model_kwargs, labels):
         X[fold_idx['train']], y_true[fold_idx['train']],
         validation_data=(X[fold_idx['valid']],
                          y_true[fold_idx['valid']]),
-        callbacks=[saver], **kwargs)
+        callbacks=[saver, TerminateOnNaN()], **kwargs)
 
     model_json = model.to_json()
     pred_file = os.path.join(output_dir, 'predictor.json')
@@ -313,10 +313,7 @@ def compute_stats(Y_true, Y_proba, folds, labels, thresholds=0.5):
 
 class ModelParams(object):
 
-    FOLDS = [{"test": [4], "train": [0, 1, 2], "valid": [3]},
-             {"test": [4], "train": [3, 0, 1], "valid": [2]},
-             {"test": [4], "train": [2, 3, 0], "valid": [1]},
-             {"test": [4], "train": [1, 2, 3], "valid": [0]}]
+    FOLDS = {"test": [4], "train": [0, 1, 2], "valid": [3]}
 
     NUM_LAYERS = [1, 2, 3, 4, 5, 6, 7, 8]
     WIDTH = [256, 512, 1024]
@@ -335,7 +332,6 @@ class ModelParams(object):
         },
     }
     BATCH_SIZE = [64, 128, 256]
-    CLASS_WEIGHTED = [True, False]
 
     @classmethod
     def template(cls):
@@ -391,8 +387,7 @@ def generate_configs(num_configs, num_classes, prefix='', hash_len=6,
         kwrgs = ModelParams.template()
         n_layers = rng.choice(ModelParams.NUM_LAYERS)
         kwrgs['fit_args']['batch_size'] = rng.choice(ModelParams.BATCH_SIZE)
-        class_weight = rng.choice(ModelParams.CLASS_WEIGHTED)
-        kwrgs['fit_args']['class_weighted'] = bool(class_weight)
+
         acts = ['relu' for _ in range(n_layers - 1)] + ['sigmoid']
         bnorm = [bool(rng.choice(ModelParams.BATCH_NORM))
                  for _ in range(n_layers - 1)] + [False]
@@ -410,10 +405,8 @@ def generate_configs(num_configs, num_classes, prefix='', hash_len=6,
         kwrgs['model_args']['width'] = width
         kwrgs['model_args']['opt_kwargs'] = opt_kwargs
         hash_name = hashlib.md5(json.dumps(kwrgs)).hexdigest()[:hash_len]
-        for fld in ModelParams.FOLDS:
-            kwrgs['folds'] = fld
-            kwrgs['outputs']['name'] = "{}{}-{}".format(prefix, hash_name,
-                                                        fld['valid'][0])
-            model_kwargs.append(copy.deepcopy(kwrgs))
+        kwrgs['folds'] = ModelParams.FOLDS.copy()
+        kwrgs['outputs']['name'] = "{}{}".format(prefix, hash_name)
+        model_kwargs.append(copy.deepcopy(kwrgs))
 
     return model_kwargs
