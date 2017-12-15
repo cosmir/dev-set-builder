@@ -145,7 +145,7 @@ def test_compute_stats():
 
 def test_generate_configs():
     num_configs = 5
-    k_folds = 4
+    k_folds = 1
     configs = audioset.openmic.generate_configs(num_configs, 23, 'deleteme-',
                                                 random_state=13579)
     assert len(configs) == num_configs * k_folds
@@ -153,3 +153,12 @@ def test_generate_configs():
 
     for kwargs in configs[::k_folds]:
         assert audioset.openmic.build_model(**kwargs['model_args']) is not None
+
+
+def test_vggish_estimator():
+    model = audioset.openmic.vggish_estimator()
+    rng = np.random.RandomState(123)
+    x = rng.uniform(0, 256, size=(100, 128))
+    y_proba = model.predict(x)
+    assert y_proba.min() >= 0
+    assert y_proba.max() <= 1.

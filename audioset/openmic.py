@@ -6,12 +6,14 @@ from keras import backend as K
 from keras.callbacks import ModelCheckpoint, TerminateOnNaN
 from keras.layers.normalization import BatchNormalization
 from keras.layers import Input, Dense, Dropout, Activation
-from keras.models import Model
+from keras.models import Model, model_from_json
 from keras.optimizers import Adam, RMSprop, SGD
 import numpy as np
 import os
 import pandas as pd
 from sklearn import metrics
+
+import audioset
 
 OPTS = {
     "Adam": Adam,
@@ -386,13 +388,14 @@ def generate_configs(num_configs, num_classes, prefix='', hash_len=6,
     for n in range(num_configs):
         kwrgs = ModelParams.template()
         n_layers = rng.choice(ModelParams.NUM_LAYERS)
-        kwrgs['fit_args']['batch_size'] = rng.choice(ModelParams.BATCH_SIZE)
+        batch_size = rng.choice(ModelParams.BATCH_SIZE)
+        kwrgs['fit_args']['batch_size'] = int(batch_size)
 
         acts = ['relu' for _ in range(n_layers - 1)] + ['sigmoid']
         bnorm = [bool(rng.choice(ModelParams.BATCH_NORM))
                  for _ in range(n_layers - 1)] + [False]
         drop = [rng.choice(ModelParams.DROPOUT) for _ in range(n_layers)]
-        width = [rng.choice(ModelParams.WIDTH)
+        width = [int(rng.choice(ModelParams.WIDTH))
                  for _ in range(n_layers - 1)] + [num_classes]
         opt_name = rng.choice(list(ModelParams.OPTS.keys()))
         opt_kwargs = dict(name=opt_name)
@@ -404,9 +407,18 @@ def generate_configs(num_configs, num_classes, prefix='', hash_len=6,
         kwrgs['model_args']['dropout'] = drop
         kwrgs['model_args']['width'] = width
         kwrgs['model_args']['opt_kwargs'] = opt_kwargs
-        hash_name = hashlib.md5(json.dumps(kwrgs)).hexdigest()[:hash_len]
+        param_str = json.dumps(kwrgs)
+        if hasattr(param_str, 'encode'):
+            param_str = param_str.encode()
+        hash_name = hashlib.md5(param_str).hexdigest()[:hash_len]
         kwrgs['folds'] = ModelParams.FOLDS.copy()
         kwrgs['outputs']['name'] = "{}{}".format(prefix, hash_name)
         model_kwargs.append(copy.deepcopy(kwrgs))
 
     return model_kwargs
+
+
+def vggish_estimator():
+    model = model_from_json(open(audioset.VGG_ESTIMATOR_FILE, 'r').read())
+    model.load_weights(audioset.VGG_ESTIMATOR_WEIGHTS)
+    return model
