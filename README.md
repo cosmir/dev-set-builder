@@ -48,7 +48,7 @@ These artifacts are made freely available here:
 
 ### OpenMIC-23 Subset
 
-As a final preprocessing step to build our development set, the full AudioSet is filtered on OpenMIC instrument classes and the labels are transformed into a sparse indicator (boolean) array, for easy use with Pythonic ML frameworks, e.g. `sklearn`.
+As a final preprocessing step to build our development set, the full AudioSet is filtered on OpenMIC instrument classes and the labels are transformed into a sparse indicator (boolean) array, for easy use with Pythonic ML frameworks, e.g. `sklearn`. This is achieved with `./scripts/filter_with_classes.py`.
 
 #### Training Distribution
 

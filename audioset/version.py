@@ -3,5 +3,5 @@
 """Version info"""
 
 short_version = '0.1'
-version = '0.1.0'
-checksum = 'fc75956'
+version = '0.1.1'
+checksum = 'fc75956'  # AudioSet repo's checksum
